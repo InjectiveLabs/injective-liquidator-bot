@@ -1,0 +1,1 @@
+go run cmd/injective-liquidator-bot/main.go cmd/injective-liquidator-bot/util.go cmd/injective-liquidator-bot/options.go cmd/injective-liquidator-bot/metrics.go cmd/injective-liquidator-bot/liquidator.go cmd/injective-liquidator-bot/keys.go start
