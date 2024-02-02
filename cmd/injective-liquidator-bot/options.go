@@ -10,7 +10,7 @@ func initGlobalOptions(
 	svcWaitTimeout **string,
 ) {
 	*envName = app.String(cli.StringOpt{
-		Name:   "e env",
+		Name:   "metrics-env",
 		Desc:   "The environment name this app runs in. Used for metrics and error reporting.",
 		EnvVar: "LIQUIDATOR_ENV",
 		Value:  "local",
@@ -213,6 +213,8 @@ func initLiquidationOptions(
 	cmd *cli.Cmd,
 	subaccountIndex **int,
 	marketID **string,
+	granterPublicAddress **string,
+	granterSubaccountIndex **int,
 ) {
 	*subaccountIndex = cmd.Int(cli.IntOpt{
 		Name:   "subaccount-index",
@@ -226,5 +228,19 @@ func initLiquidationOptions(
 		Desc:   "Market ID of the market to check liquidations for",
 		EnvVar: "LIQUIDATOR_MARKET_ID",
 		Value:  "",
+	})
+
+	*granterPublicAddress = cmd.String(cli.StringOpt{
+		Name:   "granter-public-address",
+		Desc:   "Public address of the granter account (when using a grantee account to broadcast the TXs for a granter account)",
+		EnvVar: "LIQUIDATOR_GRANTER_PUBLIC_ADDRESS",
+		Value:  "",
+	})
+
+	*granterSubaccountIndex = cmd.Int(cli.IntOpt{
+		Name:   "granter-subaccount-index",
+		Desc:   "Subaccount number to use to create the liquidation orders (when using a granter account)",
+		EnvVar: "LIQUIDATOR_GRANTER_SUBACCOUNT_INDEX",
+		Value:  0,
 	})
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/InjectiveLabs/sdk-go/client"
 	"github.com/InjectiveLabs/sdk-go/client/common"
+	"github.com/cosmos/cosmos-sdk/types"
+	eth "github.com/ethereum/go-ethereum/common"
 	"os"
 	"time"
 
@@ -55,8 +57,10 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		statsdDisabled *string
 
 		//Liquidation
-		subaccountIndex *int
-		marketID        *string
+		subaccountIndex        *int
+		marketID               *string
+		granterPublicAddress   *string
+		granterSubaccountIndex *int
 	)
 
 	initNetworkOptions(
@@ -96,6 +100,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		cmd,
 		&subaccountIndex,
 		&marketID,
+		&granterPublicAddress,
+		&granterSubaccountIndex,
 	)
 
 	cmd.Action = func() {
@@ -194,6 +200,16 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		}
 
 		subaccountID := daemonClient.Subaccount(senderAddress, *subaccountIndex)
+		granterSubaccountID := eth.HexToHash("")
+
+		if *granterPublicAddress != "" {
+			granterAddress, err := types.AccAddressFromBech32(*granterPublicAddress)
+			if err != nil {
+				log.WithError(err).Fatalln("failed to generate an address from the granter public address")
+			}
+
+			granterSubaccountID = daemonClient.Subaccount(granterAddress, *granterSubaccountIndex)
+		}
 
 		svc := liquidator.NewService(
 			daemonClient,
@@ -201,6 +217,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			marketsAssistant,
 			*marketID,
 			subaccountID,
+			*granterPublicAddress,
+			granterSubaccountID,
 		)
 		closer.Bind(func() {
 			svc.Close()

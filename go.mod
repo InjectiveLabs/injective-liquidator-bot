@@ -10,6 +10,7 @@ require (
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/google/uuid v1.4.0
 	github.com/jawher/mow.cli v1.2.0
+	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v1.2.0
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2
