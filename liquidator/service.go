@@ -2,7 +2,6 @@ package liquidator
 
 import (
 	"context"
-	sdkCommon "github.com/InjectiveLabs/sdk-go/client/common"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -97,14 +96,13 @@ func (s *liquidatorSvc) Start() (err error) {
 
 				order := s.chainClient.CreateDerivativeOrder(
 					s.subaccountID,
-					sdkCommon.NewNetwork(),
 					&chainclient.DerivativeOrderData{
 						OrderType:    orderType,
 						Quantity:     market.QuantityFromChainFormat(types.MustNewDecFromStr(position.Quantity)),
 						Price:        market.PriceFromChainFormat(types.MustNewDecFromStr(position.MarkPrice)),
 						Leverage:     decimal.RequireFromString("1"),
 						FeeRecipient: s.chainClient.FromAddress().String(),
-						MarketId:     "0x17ef48032cb24375ba7c2e39f384e56433bcab20cbee9a7357e4cba2eb00abe6",
+						MarketId:     market.Id,
 						Cid:          uuid.NewString(),
 					},
 					s.marketsAssistant,
