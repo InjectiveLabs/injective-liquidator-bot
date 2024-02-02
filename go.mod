@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/InjectiveLabs/metrics v0.0.1
-	github.com/InjectiveLabs/sdk-go v1.50.0
+	github.com/InjectiveLabs/sdk-go v1.50.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.5
 	github.com/ethereum/go-ethereum v1.11.5
