@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	AppVersion = "0.1"
+	AppVersion = "0.2"
 	GitCommit  = ""
 	BuildDate  = ""
 
