@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/service"
 	"github.com/InjectiveLabs/sdk-go/client"
 	"github.com/InjectiveLabs/sdk-go/client/common"
 	"github.com/cosmos/cosmos-sdk/types"
@@ -18,8 +19,6 @@ import (
 	chainclient "github.com/InjectiveLabs/sdk-go/client/chain"
 	sdkCommon "github.com/InjectiveLabs/sdk-go/client/common"
 	exchangeclient "github.com/InjectiveLabs/sdk-go/client/exchange"
-
-	"github.com/InjectiveLabs/injective-liquidator-bot/liquidator"
 )
 
 // liquidatorCmd action runs the service
@@ -211,7 +210,7 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			granterSubaccountID = daemonClient.Subaccount(granterAddress, *granterSubaccountIndex)
 		}
 
-		svc := liquidator.NewService(
+		svc := service.NewService(
 			daemonClient,
 			exchangeClient,
 			marketsAssistant,

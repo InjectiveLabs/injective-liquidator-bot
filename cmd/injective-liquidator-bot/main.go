@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/version"
 	"os"
 
 	cli "github.com/jawher/mow.cli"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/injective-liquidator-bot/version"
 	"github.com/joho/godotenv"
 )
 

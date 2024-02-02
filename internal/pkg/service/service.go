@@ -1,4 +1,4 @@
-package liquidator
+package service
 
 import (
 	"context"
