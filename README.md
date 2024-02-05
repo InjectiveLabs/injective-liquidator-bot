@@ -1,7 +1,7 @@
 # Injective Liquidator Bot
 
 
-The Injective Liquidator Bot is a simple liquidation bot for executing liquidations on derivative markets on Injective. 
+The Injective Liquidator Bot is a simple liquidation bot for executing liquidations on derivative markets on Injective.
 This bot operates by continuously monitoring for positions eligible for liquidation using the `LiquidablePositions` API. Upon identifying a liquidable position, the bot proceeds to initiate the liquidation process by dispatching a `MsgLiquidatedPosition` to the chain which executes the liquidation while also simultaneously creating the necessary order to facilitate an efficient liquidation.
 
 The liquidation order is created with:
@@ -65,3 +65,24 @@ The following configuration options can be specified for the bot to use a Cosmos
 - LIQUIDATOR_COSMOS_FROM_PASSPHRASE
 - LIQUIDATOR_COSMOS_PK
 - LIQUIDATOR_COSMOS_USE_LEDGER
+
+#### Configuration to run the bot using a grantee account
+The bot can also be configured to run using a delegated account. With this configuration the bot will use two accounts: the granter and the grantee.
+
+- Granter account: is the account that has balances to create the liquidation order and will be associated to the position created once the liquidation order is executed
+- Grantee account: it the account used to sign the transactions broadcasted by the bot. The only requirement for the account is to have enough INJ tokens to pay for the gas fee for the transactions
+
+When running using a delegated account, the bot will send the `MsgLiquidatePosition` with the `authz` module, including it in a `MsgExecute` message,
+
+To activate the delegated account mode the user has to configure the following options:
+
+- LIQUIDATOR_GRANTER_PUBLIC_ADDRESS: public Injective address of the account to be used as granter account
+- LIQUIDATOR_GRANTER_SUBACCOUNT_INDEX: index number of the subaccount from LIQUIDATOR_GRANTER_PUBLIC_ADDRESS to be used
+
+To deactivate the delegated account mode the LIQUIDATOR_GRANTER_PUBLIC_ADDRESS option has to be left empty.
+
+When using the delegated account mode, all the credential configuration options should be configured with the information for the _**grantee account**_.
+
+
+**Using Authz to configure a delegated account**
+You can use the script `scripts/delegateGrant.go` as an example on how to grant permissions from a granter account to a grantee account to execute the _MsgLiquidatePosition_ message.

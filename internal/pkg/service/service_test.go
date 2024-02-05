@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"testing"
+
 	exchangetypes "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
 	"github.com/InjectiveLabs/sdk-go/client/chain"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"
@@ -11,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestLiquidatePositionMessageWhenNotUsingDelegatedAccount(t *testing.T) {

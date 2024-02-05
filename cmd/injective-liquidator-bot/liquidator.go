@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/service"
 	"github.com/InjectiveLabs/sdk-go/client"
 	"github.com/InjectiveLabs/sdk-go/client/common"
 	"github.com/cosmos/cosmos-sdk/types"
 	eth "github.com/ethereum/go-ethereum/common"
-	"os"
-	"time"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	cli "github.com/jawher/mow.cli"
@@ -185,12 +186,18 @@ func liquidatorCmd(cmd *cli.Cmd) {
 
 		daemonWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
 		daemonConn := daemonClient.QueryClient()
-		waitForService(daemonWaitCtx, daemonConn)
+		err = waitForService(daemonWaitCtx, daemonConn)
+		if err != nil {
+			log.WithError(err).Fatalln("error waiting for chain client initialization")
+		}
 		cancelWait()
 
 		exchangeWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
 		exchangeConn := exchangeClient.QueryClient()
-		waitForService(exchangeWaitCtx, exchangeConn)
+		err = waitForService(exchangeWaitCtx, exchangeConn)
+		if err != nil {
+			log.WithError(err).Fatalln("error waiting for exchain client initialization")
+		}
 		cancelWait()
 
 		marketsAssistant, err := chainclient.NewMarketsAssistantInitializedFromChain(context.Background(), exchangeClient)

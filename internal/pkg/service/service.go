@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"runtime/debug"
+	"time"
+
 	"github.com/InjectiveLabs/sdk-go/client/core"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"
 	"github.com/cosmos/cosmos-sdk/types"
@@ -9,8 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"runtime/debug"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"

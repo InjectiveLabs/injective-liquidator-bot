@@ -103,8 +103,6 @@ func (c *LocalMockChainClient) CreateDerivativeOrder(defaultSubaccountID eth.Has
 }
 
 func (c *LocalMockChainClient) SyncBroadcastMsg(msgs ...sdk.Msg) (*tx.BroadcastTxResponse, error) {
-	for _, msg := range msgs {
-		c.BroadcastedMessages = append(c.BroadcastedMessages, msg)
-	}
+	c.BroadcastedMessages = append(c.BroadcastedMessages, msgs...)
 	return &tx.BroadcastTxResponse{}, nil
 }

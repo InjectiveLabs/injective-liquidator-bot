@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/version"
 	"os"
+
+	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/version"
 
 	cli "github.com/jawher/mow.cli"
 	log "github.com/xlab/suplog"
