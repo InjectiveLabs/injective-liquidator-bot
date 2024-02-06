@@ -72,14 +72,14 @@ The bot can also be configured to run using a delegated account. With this confi
 - Granter account: is the account that has balances to create the liquidation order and will be associated to the position created once the liquidation order is executed
 - Grantee account: it the account used to sign the transactions broadcasted by the bot. The only requirement for the account is to have enough INJ tokens to pay for the gas fee for the transactions
 
-When running using a delegated account, the bot will send the `MsgLiquidatePosition` with the `authz` module, including it in a `MsgExecute` message,
+When running using a delegated account, the `MsgLiquidatePosition` message is not sent directly, but wrapped inside a `MsgExecute`, which is executed through `Authz` module's authorization mechanism.
 
 To activate the delegated account mode the user has to configure the following options:
 
 - LIQUIDATOR_GRANTER_PUBLIC_ADDRESS: public Injective address of the account to be used as granter account
 - LIQUIDATOR_GRANTER_SUBACCOUNT_INDEX: index number of the subaccount from LIQUIDATOR_GRANTER_PUBLIC_ADDRESS to be used
 
-To deactivate the delegated account mode the LIQUIDATOR_GRANTER_PUBLIC_ADDRESS option has to be left empty.
+To deactivate the delegated account mode the LIQUIDATOR_GRANTER_PUBLIC_ADDRESS option has to be left empty (ie: `LIQUIDATOR_GRANTER_PUBLIC_ADDRESS=""` or `LIQUIDATOR_GRANTER_PUBLIC_ADDRESS=`).
 
 When using the delegated account mode, all the credential configuration options should be configured with the information for the _**grantee account**_.
 
