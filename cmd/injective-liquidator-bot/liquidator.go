@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/InjectiveLabs/sdk-go/client"
-	"github.com/InjectiveLabs/sdk-go/client/common"
 	"os"
 	"time"
+
+	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/service"
+	"github.com/InjectiveLabs/sdk-go/client"
+	"github.com/InjectiveLabs/sdk-go/client/common"
+	"github.com/cosmos/cosmos-sdk/types"
+	eth "github.com/ethereum/go-ethereum/common"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	cli "github.com/jawher/mow.cli"
@@ -16,8 +20,6 @@ import (
 	chainclient "github.com/InjectiveLabs/sdk-go/client/chain"
 	sdkCommon "github.com/InjectiveLabs/sdk-go/client/common"
 	exchangeclient "github.com/InjectiveLabs/sdk-go/client/exchange"
-
-	"github.com/InjectiveLabs/injective-liquidator-bot/liquidator"
 )
 
 // liquidatorCmd action runs the service
@@ -55,8 +57,10 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		statsdDisabled *string
 
 		//Liquidation
-		subaccountIndex *int
-		marketID        *string
+		subaccountIndex        *int
+		marketID               *string
+		granterPublicAddress   *string
+		granterSubaccountIndex *int
 	)
 
 	initNetworkOptions(
@@ -96,6 +100,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		cmd,
 		&subaccountIndex,
 		&marketID,
+		&granterPublicAddress,
+		&granterSubaccountIndex,
 	)
 
 	cmd.Action = func() {
@@ -180,12 +186,18 @@ func liquidatorCmd(cmd *cli.Cmd) {
 
 		daemonWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
 		daemonConn := daemonClient.QueryClient()
-		waitForService(daemonWaitCtx, daemonConn)
+		err = waitForService(daemonWaitCtx, daemonConn)
+		if err != nil {
+			log.WithError(err).Fatalln("error waiting for chain client initialization")
+		}
 		cancelWait()
 
 		exchangeWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
 		exchangeConn := exchangeClient.QueryClient()
-		waitForService(exchangeWaitCtx, exchangeConn)
+		err = waitForService(exchangeWaitCtx, exchangeConn)
+		if err != nil {
+			log.WithError(err).Fatalln("error waiting for exchain client initialization")
+		}
 		cancelWait()
 
 		marketsAssistant, err := chainclient.NewMarketsAssistantInitializedFromChain(context.Background(), exchangeClient)
@@ -194,13 +206,25 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		}
 
 		subaccountID := daemonClient.Subaccount(senderAddress, *subaccountIndex)
+		granterSubaccountID := eth.HexToHash("")
 
-		svc := liquidator.NewService(
+		if *granterPublicAddress != "" {
+			granterAddress, err := types.AccAddressFromBech32(*granterPublicAddress)
+			if err != nil {
+				log.WithError(err).Fatalln("failed to generate an address from the granter public address")
+			}
+
+			granterSubaccountID = daemonClient.Subaccount(granterAddress, *granterSubaccountIndex)
+		}
+
+		svc := service.NewService(
 			daemonClient,
 			exchangeClient,
 			marketsAssistant,
 			*marketID,
 			subaccountID,
+			*granterPublicAddress,
+			granterSubaccountID,
 		)
 		closer.Bind(func() {
 			svc.Close()

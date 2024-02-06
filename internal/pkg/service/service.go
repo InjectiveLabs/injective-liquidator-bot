@@ -1,14 +1,17 @@
-package liquidator
+package service
 
 import (
 	"context"
+	"runtime/debug"
+	"time"
+
+	"github.com/InjectiveLabs/sdk-go/client/core"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
-	"runtime/debug"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
@@ -18,6 +21,7 @@ import (
 	chainclient "github.com/InjectiveLabs/sdk-go/client/chain"
 	derivativeExchangePB "github.com/InjectiveLabs/sdk-go/exchange/derivative_exchange_rpc/pb"
 	metaPB "github.com/InjectiveLabs/sdk-go/exchange/meta_rpc/pb"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 type Service interface {
@@ -26,11 +30,13 @@ type Service interface {
 }
 
 type liquidatorSvc struct {
-	chainClient      chainclient.ChainClient
-	exchangeClient   exchange.ExchangeClient
-	marketsAssistant chainclient.MarketsAssistant
-	marketID         string
-	subaccountID     common.Hash
+	chainClient          chainclient.ChainClient
+	exchangeClient       exchange.ExchangeClient
+	marketsAssistant     chainclient.MarketsAssistant
+	marketID             string
+	subaccountID         common.Hash
+	granterPublicAddress string
+	granterSubaccountID  common.Hash
 
 	logger  log.Logger
 	svcTags metrics.Tags
@@ -42,6 +48,9 @@ func NewService(
 	marketsAssistant chainclient.MarketsAssistant,
 	marketID string,
 	subaccountID common.Hash,
+	granterPublicAddress string,
+	granterSubaccountID common.Hash,
+
 ) Service {
 	return &liquidatorSvc{
 		logger: log.WithField("svc", "liquidator"),
@@ -49,11 +58,13 @@ func NewService(
 			"svc": "liquidator_bot",
 		},
 
-		chainClient:      chainClient,
-		exchangeClient:   exchangeClient,
-		marketsAssistant: marketsAssistant,
-		marketID:         marketID,
-		subaccountID:     subaccountID,
+		chainClient:          chainClient,
+		exchangeClient:       exchangeClient,
+		marketsAssistant:     marketsAssistant,
+		marketID:             marketID,
+		subaccountID:         subaccountID,
+		granterPublicAddress: granterPublicAddress,
+		granterSubaccountID:  granterSubaccountID,
 	}
 }
 
@@ -89,31 +100,7 @@ func (s *liquidatorSvc) Start() (err error) {
 
 		if len(positions) > 0 {
 			for _, position := range positions {
-				orderType := exchangetypes.OrderType_BUY
-				if position.Direction == "short" {
-					orderType = exchangetypes.OrderType_SELL
-				}
-
-				order := s.chainClient.CreateDerivativeOrder(
-					s.subaccountID,
-					&chainclient.DerivativeOrderData{
-						OrderType:    orderType,
-						Quantity:     market.QuantityFromChainFormat(types.MustNewDecFromStr(position.Quantity)),
-						Price:        market.PriceFromChainFormat(types.MustNewDecFromStr(position.MarkPrice)),
-						Leverage:     decimal.RequireFromString("1"),
-						FeeRecipient: s.chainClient.FromAddress().String(),
-						MarketId:     market.Id,
-						Cid:          uuid.NewString(),
-					},
-					s.marketsAssistant,
-				)
-
-				msg := &exchangetypes.MsgLiquidatePosition{
-					Sender:       s.chainClient.FromAddress().String(),
-					SubaccountId: position.SubaccountId,
-					MarketId:     position.MarketId,
-					Order:        order,
-				}
+				msg := s.createLiquidationMessage(position, market)
 
 				if _, err := s.chainClient.SyncBroadcastMsg(msg); err != nil {
 					metrics.ReportClosureFuncError("SyncBroadcastMsg", s.svcTags)
@@ -142,4 +129,61 @@ func (s *liquidatorSvc) panicRecover(err *error) {
 
 func (s *liquidatorSvc) Close() {
 	// graceful shutdown if needed
+}
+
+func (s *liquidatorSvc) createLiquidationMessage(position *derivativeExchangePB.DerivativePosition, market core.DerivativeMarket) types.Msg {
+	var msg types.Msg
+	if s.granterPublicAddress == "" {
+		liquidatePositionMessage := s.createLiquidatePositionMessage(position, market, s.chainClient.FromAddress().String(), s.subaccountID)
+		msg = &liquidatePositionMessage
+	} else {
+		liquidatePositionMessage := s.createLiquidatePositionMessage(position, market, s.granterPublicAddress, s.granterSubaccountID)
+		liquidationMessageBytes, _ := liquidatePositionMessage.Marshal()
+		liquidationMsgAsAny := &codectypes.Any{
+			TypeUrl: types.MsgTypeURL(&liquidatePositionMessage),
+			Value:   liquidationMessageBytes,
+		}
+		msg = &authz.MsgExec{
+			Grantee: s.chainClient.FromAddress().String(),
+			Msgs:    []*codectypes.Any{liquidationMsgAsAny},
+		}
+	}
+
+	return msg
+}
+
+func (s *liquidatorSvc) createLiquidatePositionMessage(
+	position *derivativeExchangePB.DerivativePosition,
+	market core.DerivativeMarket,
+	senderAddress string,
+	senderSubaccountID common.Hash,
+) exchangetypes.MsgLiquidatePosition {
+
+	orderType := exchangetypes.OrderType_BUY
+	if position.Direction == "short" {
+		orderType = exchangetypes.OrderType_SELL
+	}
+
+	order := s.chainClient.CreateDerivativeOrder(
+		senderSubaccountID,
+		&chainclient.DerivativeOrderData{
+			OrderType:    orderType,
+			Quantity:     market.QuantityFromChainFormat(types.MustNewDecFromStr(position.Quantity)),
+			Price:        market.PriceFromChainFormat(types.MustNewDecFromStr(position.MarkPrice)),
+			Leverage:     decimal.RequireFromString("1"),
+			FeeRecipient: senderAddress,
+			MarketId:     market.Id,
+			Cid:          uuid.NewString(),
+		},
+		s.marketsAssistant,
+	)
+
+	msg := exchangetypes.MsgLiquidatePosition{
+		Sender:       senderAddress,
+		SubaccountId: position.SubaccountId,
+		MarketId:     position.MarketId,
+		Order:        order,
+	}
+
+	return msg
 }
