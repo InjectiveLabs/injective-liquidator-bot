@@ -61,6 +61,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		marketID               *string
 		granterPublicAddress   *string
 		granterSubaccountIndex *int
+		maxOrderAmount         *string
+		maxOrderNotional       *string
 	)
 
 	initNetworkOptions(
@@ -102,6 +104,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		&marketID,
 		&granterPublicAddress,
 		&granterSubaccountIndex,
+		&maxOrderAmount,
+		&maxOrderNotional,
 	)
 
 	cmd.Action = func() {
@@ -217,6 +221,23 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			granterSubaccountID = daemonClient.Subaccount(granterAddress, *granterSubaccountIndex)
 		}
 
+		parsedMaxOrderAmount := types.MaxSortableDec
+		if *maxOrderAmount != "" {
+			parsedMaxOrderAmount, err = types.NewDecFromStr(*maxOrderAmount)
+			if err != nil {
+				log.WithError(err).Fatalf("failed to parse max order amount %s", *maxOrderAmount)
+				parsedMaxOrderAmount = types.MaxSortableDec
+			}
+		}
+		parsedMaxOrderNotional := types.MaxSortableDec
+		if *maxOrderNotional != "" {
+			parsedMaxOrderNotional, err = types.NewDecFromStr(*maxOrderNotional)
+			if err != nil {
+				log.WithError(err).Fatalf("failed to parse max order notional %s", *maxOrderNotional)
+				parsedMaxOrderNotional = types.MaxSortableDec
+			}
+		}
+
 		svc := service.NewService(
 			daemonClient,
 			exchangeClient,
@@ -225,6 +246,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			subaccountID,
 			*granterPublicAddress,
 			granterSubaccountID,
+			parsedMaxOrderAmount,
+			parsedMaxOrderNotional,
 		)
 		closer.Bind(func() {
 			svc.Close()

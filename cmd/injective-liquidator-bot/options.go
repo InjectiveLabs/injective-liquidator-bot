@@ -215,6 +215,8 @@ func initLiquidationOptions(
 	marketID **string,
 	granterPublicAddress **string,
 	granterSubaccountIndex **int,
+	maxOrderAmount **string,
+	maxOrderNotional **string,
 ) {
 	*subaccountIndex = cmd.Int(cli.IntOpt{
 		Name:   "subaccount-index",
@@ -242,5 +244,19 @@ func initLiquidationOptions(
 		Desc:   "Subaccount number to use to create the liquidation orders (when using a granter account)",
 		EnvVar: "LIQUIDATOR_GRANTER_SUBACCOUNT_INDEX",
 		Value:  0,
+	})
+
+	*maxOrderAmount = cmd.String(cli.StringOpt{
+		Name:   "max-order-amount",
+		Desc:   "Maximum amount for liquidation orders (in base asset)",
+		EnvVar: "LIQUIDATOR_MAX_ORDER_AMOUNT",
+		Value:  "",
+	})
+
+	*maxOrderNotional = cmd.String(cli.StringOpt{
+		Name:   "max-order-notional",
+		Desc:   "Maximum notional for liquidation orders (in quote asset)",
+		EnvVar: "LIQUIDATOR_MAX_ORDER_NOTIONAL",
+		Value:  "",
 	})
 }
