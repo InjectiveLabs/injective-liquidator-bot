@@ -52,6 +52,8 @@ func TestLiquidatePositionMessageWhenNotUsingDelegatedAccount(t *testing.T) {
 		subaccountID:         granteeSubaccountID,
 		granterPublicAddress: granterPublicAddress,
 		granterSubaccountID:  granterSubaccountID,
+		maxOrderAmount:       types.MaxSortableDec,
+		maxOrderNotional:     types.MaxSortableDec,
 	}
 
 	market := marketAssistant.AllDerivativeMarkets()[btcUsdtDerivativeMarketInfo.MarketId]
@@ -119,6 +121,8 @@ func TestLiquidatePositionMessageWhenUsingDelegatedAccount(t *testing.T) {
 		subaccountID:         granteeSubaccountID,
 		granterPublicAddress: granterPublicAddress,
 		granterSubaccountID:  granterSubaccountID,
+		maxOrderAmount:       types.MaxSortableDec,
+		maxOrderNotional:     types.MaxSortableDec,
 	}
 
 	market := marketAssistant.AllDerivativeMarkets()[btcUsdtDerivativeMarketInfo.MarketId]
