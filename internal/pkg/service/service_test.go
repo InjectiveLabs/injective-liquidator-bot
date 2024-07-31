@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"testing"
+
+	"cosmossdk.io/math"
 
 	exchangetypes "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
 	"github.com/InjectiveLabs/sdk-go/client/chain"

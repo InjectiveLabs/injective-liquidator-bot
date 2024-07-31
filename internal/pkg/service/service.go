@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"runtime/debug"
 	"time"
+
+	"cosmossdk.io/math"
 
 	"github.com/InjectiveLabs/sdk-go/client/core"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"

@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"fmt"
 	"os"
 	"time"
+
+	"cosmossdk.io/math"
 
 	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/service"
 	"github.com/InjectiveLabs/sdk-go/client"
