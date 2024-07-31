@@ -33,10 +33,12 @@ If the created configuration env file has a name different than `.env` you need 
 
 **General Configuration Options**
 
-| Option                                | Description                                                                                                                                           |
-|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| LIQUIDATOR_SUBACCOUNT_INDEX           | The number of the subaccount the bot will use to send the liquidation requests to the chain (the account is determined by the configured credentials) |
-| LIQUIDATOR_MARKET_ID                  | ID of the market the bot will use to find liquidable positions and execute the liquidations                                                           |
+| Option                        | Description                                                                                                                                                        |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| LIQUIDATOR_SUBACCOUNT_INDEX   | The number of the subaccount the bot will use to send the liquidation requests to the chain (the account is determined by the configured credentials)              |
+| LIQUIDATOR_MARKET_ID          | ID of the market the bot will use to find liquidable positions and execute the liquidations                                                                        |
+| LIQUIDATOR_MAX_ORDER_AMOUNT   | This configuration defines a maximum amount for the liquidation orders (in base asset). If defined the bot could perform partial liquidations                      |
+| LIQUIDATOR_MAX_ORDER_NOTIONAL | This configuration defines a maximum notional (amount x price) for the liquidation orders (in quote asset). If defined the bot could perform partial liquidations  |
 
 
 **Network Configuration options**

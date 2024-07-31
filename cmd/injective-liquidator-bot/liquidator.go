@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"cosmossdk.io/math"
+
 	"github.com/InjectiveLabs/injective-liquidator-bot/internal/pkg/service"
 	"github.com/InjectiveLabs/sdk-go/client"
 	"github.com/InjectiveLabs/sdk-go/client/common"
@@ -61,6 +63,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		marketID               *string
 		granterPublicAddress   *string
 		granterSubaccountIndex *int
+		maxOrderAmount         *string
+		maxOrderNotional       *string
 	)
 
 	initNetworkOptions(
@@ -102,6 +106,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 		&marketID,
 		&granterPublicAddress,
 		&granterSubaccountIndex,
+		&maxOrderAmount,
+		&maxOrderNotional,
 	)
 
 	cmd.Action = func() {
@@ -217,6 +223,23 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			granterSubaccountID = daemonClient.Subaccount(granterAddress, *granterSubaccountIndex)
 		}
 
+		parsedMaxOrderAmount := math.LegacyMaxSortableDec
+		if *maxOrderAmount != "" {
+			parsedMaxOrderAmount, err = math.LegacyNewDecFromStr(*maxOrderAmount)
+			if err != nil {
+				log.WithError(err).Fatalf("failed to parse max order amount %s", *maxOrderAmount)
+				parsedMaxOrderAmount = math.LegacyMaxSortableDec
+			}
+		}
+		parsedMaxOrderNotional := math.LegacyMaxSortableDec
+		if *maxOrderNotional != "" {
+			parsedMaxOrderNotional, err = math.LegacyNewDecFromStr(*maxOrderNotional)
+			if err != nil {
+				log.WithError(err).Fatalf("failed to parse max order notional %s", *maxOrderNotional)
+				parsedMaxOrderNotional = math.LegacyMaxSortableDec
+			}
+		}
+
 		svc := service.NewService(
 			daemonClient,
 			exchangeClient,
@@ -225,6 +248,8 @@ func liquidatorCmd(cmd *cli.Cmd) {
 			subaccountID,
 			*granterPublicAddress,
 			granterSubaccountID,
+			parsedMaxOrderAmount,
+			parsedMaxOrderNotional,
 		)
 		closer.Bind(func() {
 			svc.Close()
@@ -267,7 +292,6 @@ func createNetwork(
 			network.ExchangeGrpcEndpoint = exchangeGrpcEndpoint
 			network.ExplorerGrpcEndpoint = explorerGrpcEndpoint
 			network.ChainId = chainID
-			network.Fee_denom = "inj"
 		} else {
 			err = fmt.Errorf("network name %s is not valid", networkName)
 		}

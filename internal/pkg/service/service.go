@@ -5,9 +5,10 @@ import (
 	"runtime/debug"
 	"time"
 
+	"cosmossdk.io/math"
+
 	"github.com/InjectiveLabs/sdk-go/client/core"
 	"github.com/InjectiveLabs/sdk-go/client/exchange"
-	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
@@ -22,6 +23,7 @@ import (
 	derivativeExchangePB "github.com/InjectiveLabs/sdk-go/exchange/derivative_exchange_rpc/pb"
 	metaPB "github.com/InjectiveLabs/sdk-go/exchange/meta_rpc/pb"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Service interface {
@@ -37,6 +39,8 @@ type liquidatorSvc struct {
 	subaccountID         common.Hash
 	granterPublicAddress string
 	granterSubaccountID  common.Hash
+	maxOrderAmount       math.LegacyDec
+	maxOrderNotional     math.LegacyDec
 
 	logger  log.Logger
 	svcTags metrics.Tags
@@ -50,6 +54,8 @@ func NewService(
 	subaccountID common.Hash,
 	granterPublicAddress string,
 	granterSubaccountID common.Hash,
+	maxOrderAmount math.LegacyDec,
+	maxOrderNotional math.LegacyDec,
 
 ) Service {
 	return &liquidatorSvc{
@@ -65,6 +71,8 @@ func NewService(
 		subaccountID:         subaccountID,
 		granterPublicAddress: granterPublicAddress,
 		granterSubaccountID:  granterSubaccountID,
+		maxOrderAmount:       maxOrderAmount,
+		maxOrderNotional:     maxOrderNotional,
 	}
 }
 
@@ -131,8 +139,8 @@ func (s *liquidatorSvc) Close() {
 	// graceful shutdown if needed
 }
 
-func (s *liquidatorSvc) createLiquidationMessage(position *derivativeExchangePB.DerivativePosition, market core.DerivativeMarket) types.Msg {
-	var msg types.Msg
+func (s *liquidatorSvc) createLiquidationMessage(position *derivativeExchangePB.DerivativePosition, market core.DerivativeMarket) sdktypes.Msg {
+	var msg sdktypes.Msg
 	if s.granterPublicAddress == "" {
 		liquidatePositionMessage := s.createLiquidatePositionMessage(position, market, s.chainClient.FromAddress().String(), s.subaccountID)
 		msg = &liquidatePositionMessage
@@ -140,7 +148,7 @@ func (s *liquidatorSvc) createLiquidationMessage(position *derivativeExchangePB.
 		liquidatePositionMessage := s.createLiquidatePositionMessage(position, market, s.granterPublicAddress, s.granterSubaccountID)
 		liquidationMessageBytes, _ := liquidatePositionMessage.Marshal()
 		liquidationMsgAsAny := &codectypes.Any{
-			TypeUrl: types.MsgTypeURL(&liquidatePositionMessage),
+			TypeUrl: sdktypes.MsgTypeURL(&liquidatePositionMessage),
 			Value:   liquidationMessageBytes,
 		}
 		msg = &authz.MsgExec{
@@ -164,12 +172,17 @@ func (s *liquidatorSvc) createLiquidatePositionMessage(
 		orderType = exchangetypes.OrderType_SELL
 	}
 
+	candidateOrderAmountFromMaxNotional := s.maxOrderNotional.Quo(math.LegacyMustNewDecFromStr(position.MarkPrice))
+	fullLiquidationOrderAmount := math.LegacyMustNewDecFromStr(position.Quantity)
+	orderAmount := math.LegacyMinDec(candidateOrderAmountFromMaxNotional, fullLiquidationOrderAmount)
+	orderAmount = math.LegacyMinDec(orderAmount, s.maxOrderAmount)
+
 	order := s.chainClient.CreateDerivativeOrder(
 		senderSubaccountID,
 		&chainclient.DerivativeOrderData{
 			OrderType:    orderType,
-			Quantity:     market.QuantityFromChainFormat(types.MustNewDecFromStr(position.Quantity)),
-			Price:        market.PriceFromChainFormat(types.MustNewDecFromStr(position.MarkPrice)),
+			Quantity:     market.QuantityFromChainFormat(orderAmount),
+			Price:        market.PriceFromChainFormat(math.LegacyMustNewDecFromStr(position.MarkPrice)),
 			Leverage:     decimal.RequireFromString("1"),
 			FeeRecipient: senderAddress,
 			MarketId:     market.Id,
