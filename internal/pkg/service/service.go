@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"cosmossdk.io/math"
 	"runtime/debug"
 	"time"
 
@@ -37,8 +38,8 @@ type liquidatorSvc struct {
 	subaccountID         common.Hash
 	granterPublicAddress string
 	granterSubaccountID  common.Hash
-	maxOrderAmount       sdktypes.Dec
-	maxOrderNotional     sdktypes.Dec
+	maxOrderAmount       math.LegacyDec
+	maxOrderNotional     math.LegacyDec
 
 	logger  log.Logger
 	svcTags metrics.Tags
@@ -52,8 +53,8 @@ func NewService(
 	subaccountID common.Hash,
 	granterPublicAddress string,
 	granterSubaccountID common.Hash,
-	maxOrderAmount sdktypes.Dec,
-	maxOrderNotional sdktypes.Dec,
+	maxOrderAmount math.LegacyDec,
+	maxOrderNotional math.LegacyDec,
 
 ) Service {
 	return &liquidatorSvc{
@@ -170,17 +171,17 @@ func (s *liquidatorSvc) createLiquidatePositionMessage(
 		orderType = exchangetypes.OrderType_SELL
 	}
 
-	candidateOrderAmountFromMaxNotional := s.maxOrderNotional.Quo(sdktypes.MustNewDecFromStr(position.MarkPrice))
-	fullLiquidationOrderAmount := sdktypes.MustNewDecFromStr(position.Quantity)
-	orderAmount := sdktypes.MinDec(candidateOrderAmountFromMaxNotional, fullLiquidationOrderAmount)
-	orderAmount = sdktypes.MinDec(orderAmount, s.maxOrderAmount)
+	candidateOrderAmountFromMaxNotional := s.maxOrderNotional.Quo(math.LegacyMustNewDecFromStr(position.MarkPrice))
+	fullLiquidationOrderAmount := math.LegacyMustNewDecFromStr(position.Quantity)
+	orderAmount := math.LegacyMinDec(candidateOrderAmountFromMaxNotional, fullLiquidationOrderAmount)
+	orderAmount = math.LegacyMinDec(orderAmount, s.maxOrderAmount)
 
 	order := s.chainClient.CreateDerivativeOrder(
 		senderSubaccountID,
 		&chainclient.DerivativeOrderData{
 			OrderType:    orderType,
 			Quantity:     market.QuantityFromChainFormat(orderAmount),
-			Price:        market.PriceFromChainFormat(sdktypes.MustNewDecFromStr(position.MarkPrice)),
+			Price:        market.PriceFromChainFormat(math.LegacyMustNewDecFromStr(position.MarkPrice)),
 			Leverage:     decimal.RequireFromString("1"),
 			FeeRecipient: senderAddress,
 			MarketId:     market.Id,

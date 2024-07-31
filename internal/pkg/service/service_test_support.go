@@ -1,6 +1,7 @@
 package service
 
 import (
+	"cosmossdk.io/math"
 	exchangetypes "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
 	"github.com/InjectiveLabs/sdk-go/client/chain"
 	derivativeExchangePB "github.com/InjectiveLabs/sdk-go/exchange/derivative_exchange_rpc/pb"
@@ -82,7 +83,7 @@ func (c *LocalMockChainClient) CreateDerivativeOrder(defaultSubaccountID eth.Has
 
 	orderSize := market.QuantityToChainFormat(d.Quantity)
 	orderPrice := market.PriceToChainFormat(d.Price)
-	orderMargin := sdk.MustNewDecFromStr("0")
+	orderMargin := math.LegacyMustNewDecFromStr("0")
 
 	if !d.IsReduceOnly {
 		orderMargin = market.CalculateMarginInChainFormat(d.Quantity, d.Price, d.Leverage)

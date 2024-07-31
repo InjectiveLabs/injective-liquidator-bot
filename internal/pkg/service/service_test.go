@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"cosmossdk.io/math"
 	"testing"
 
 	exchangetypes "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
@@ -52,8 +53,8 @@ func TestLiquidatePositionMessageWhenNotUsingDelegatedAccount(t *testing.T) {
 		subaccountID:         granteeSubaccountID,
 		granterPublicAddress: granterPublicAddress,
 		granterSubaccountID:  granterSubaccountID,
-		maxOrderAmount:       types.MaxSortableDec,
-		maxOrderNotional:     types.MaxSortableDec,
+		maxOrderAmount:       math.LegacyMaxSortableDec,
+		maxOrderNotional:     math.LegacyMaxSortableDec,
 	}
 
 	market := marketAssistant.AllDerivativeMarkets()[btcUsdtDerivativeMarketInfo.MarketId]
@@ -74,13 +75,13 @@ func TestLiquidatePositionMessageWhenNotUsingDelegatedAccount(t *testing.T) {
 	assert.Equal(t, market.Id, liquidationMessage.Order.GetMarketId())
 	assert.Equal(t, granteeSubaccountID.String(), liquidationMessage.Order.OrderInfo.SubaccountId)
 	assert.Equal(t, granteePublicAddress, liquidationMessage.Order.OrderInfo.FeeRecipient)
-	assert.Equal(t, types.MustNewDecFromStr(position.MarkPrice), liquidationMessage.Order.OrderInfo.Price)
-	assert.Equal(t, types.MustNewDecFromStr(position.Quantity), liquidationMessage.Order.OrderInfo.Quantity)
+	assert.Equal(t, math.LegacyMustNewDecFromStr(position.MarkPrice), liquidationMessage.Order.OrderInfo.Price)
+	assert.Equal(t, math.LegacyMustNewDecFromStr(position.Quantity), liquidationMessage.Order.OrderInfo.Quantity)
 	assert.NotEqual(t, "", liquidationMessage.Order.OrderInfo.GetCid())
 	assert.Equal(t, exchangetypes.OrderType_BUY, liquidationMessage.Order.OrderType)
 	assert.Equal(
 		t,
-		types.MustNewDecFromStr(position.Quantity).Mul(types.MustNewDecFromStr(position.MarkPrice)),
+		math.LegacyMustNewDecFromStr(position.Quantity).Mul(math.LegacyMustNewDecFromStr(position.MarkPrice)),
 		liquidationMessage.Order.GetMargin(),
 	)
 }
@@ -121,8 +122,8 @@ func TestLiquidatePositionMessageWhenUsingDelegatedAccount(t *testing.T) {
 		subaccountID:         granteeSubaccountID,
 		granterPublicAddress: granterPublicAddress,
 		granterSubaccountID:  granterSubaccountID,
-		maxOrderAmount:       types.MaxSortableDec,
-		maxOrderNotional:     types.MaxSortableDec,
+		maxOrderAmount:       math.LegacyMaxSortableDec,
+		maxOrderNotional:     math.LegacyMaxSortableDec,
 	}
 
 	market := marketAssistant.AllDerivativeMarkets()[btcUsdtDerivativeMarketInfo.MarketId]
@@ -150,13 +151,13 @@ func TestLiquidatePositionMessageWhenUsingDelegatedAccount(t *testing.T) {
 	assert.Equal(t, market.Id, liquidationMessage.Order.GetMarketId())
 	assert.Equal(t, granterSubaccountID.String(), liquidationMessage.Order.OrderInfo.SubaccountId)
 	assert.Equal(t, granterPublicAddress, liquidationMessage.Order.OrderInfo.FeeRecipient)
-	assert.Equal(t, types.MustNewDecFromStr(position.MarkPrice), liquidationMessage.Order.OrderInfo.Price)
-	assert.Equal(t, types.MustNewDecFromStr(position.Quantity), liquidationMessage.Order.OrderInfo.Quantity)
+	assert.Equal(t, math.LegacyMustNewDecFromStr(position.MarkPrice), liquidationMessage.Order.OrderInfo.Price)
+	assert.Equal(t, math.LegacyMustNewDecFromStr(position.Quantity), liquidationMessage.Order.OrderInfo.Quantity)
 	assert.NotEqual(t, "", liquidationMessage.Order.OrderInfo.GetCid())
 	assert.Equal(t, exchangetypes.OrderType_BUY, liquidationMessage.Order.OrderType)
 	assert.Equal(
 		t,
-		types.MustNewDecFromStr(position.Quantity).Mul(types.MustNewDecFromStr(position.MarkPrice)),
+		math.LegacyMustNewDecFromStr(position.Quantity).Mul(math.LegacyMustNewDecFromStr(position.MarkPrice)),
 		liquidationMessage.Order.GetMargin(),
 	)
 }
