@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -281,20 +280,16 @@ func createNetwork(
 	var network = sdkCommon.NewNetwork()
 	var err error
 
-	if networkName == "mainnet" || networkName == "testnet" {
-		network = sdkCommon.LoadNetwork(networkName, "lb")
+	if networkName == "custom" {
+		network.LcdEndpoint = lcdEndpoint
+		network.TmEndpoint = tendermintEndpoint
+		network.ChainGrpcEndpoint = chainGrpcEndpoint
+		network.ChainStreamGrpcEndpoint = chainStreamGrpcEndpoint
+		network.ExchangeGrpcEndpoint = exchangeGrpcEndpoint
+		network.ExplorerGrpcEndpoint = explorerGrpcEndpoint
+		network.ChainId = chainID
 	} else {
-		if networkName == "custom" {
-			network.LcdEndpoint = lcdEndpoint
-			network.TmEndpoint = tendermintEndpoint
-			network.ChainGrpcEndpoint = chainGrpcEndpoint
-			network.ChainStreamGrpcEndpoint = chainStreamGrpcEndpoint
-			network.ExchangeGrpcEndpoint = exchangeGrpcEndpoint
-			network.ExplorerGrpcEndpoint = explorerGrpcEndpoint
-			network.ChainId = chainID
-		} else {
-			err = fmt.Errorf("network name %s is not valid", networkName)
-		}
+		network = sdkCommon.LoadNetwork(networkName, "lb")
 	}
 
 	return network, err
